@@ -1,23 +1,40 @@
-const express = require('express');
-const dotenv = require('dotenv');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const paymentRoutes = require('./routes/paymentRoutes');
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
+const dotenv = require("dotenv");
+const path = require("path");
 
 dotenv.config();
 
 const app = express();
-app.use(cors());
-app.use(express.json()); // for parsing application/json
+app.use(cors({
+  origin: "https://utsavsingh.vercel.app",  
+  methods: ["GET", "POST"],
+  credentials: true
+}));
+app.use(express.json());
 
-mongoose
-  .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log('MongoDB connected'))
-  .catch((err) => console.error('MongoDB connection error:', err));
+// MongoDB connection
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+}).then(() => console.log("MongoDB connected"))
+  .catch(err => console.log(err));
 
 // Routes
-app.use('/api/payment', paymentRoutes);
+const paymentRoutes = require("./routes/paymentRoutes");
+const downloadRoutes = require("./routes/downloadRoute");
 
-// Start server
+app.use("/api/payment", paymentRoutes);
+app.use("/api/download", downloadRoutes); // <-- your download route
+
+// Serve static resume if needed
+app.use("/static", express.static(path.join(__dirname, "public")));
+
+// Default
+app.get("/", (req, res) => {
+  res.send("Backend running");
+});
+
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
