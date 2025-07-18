@@ -3,7 +3,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const paymentRoutes = require('./routes/paymentRoutes');
-const downloadRoutes = require('./routes/downloadRoutes'); // if you've separated it
+const downloadRoutes = require('./routes/downloadRoutes'); 
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -19,7 +19,7 @@ mongoose.connect(process.env.MONGO_URI)
 
 // Routes
 app.use('/api/payment', paymentRoutes);
-app.use('/api/download', downloadRoutes); // if you use token to download
+app.use('/api/download', downloadRoutes); 
 
 app.get('/', (req, res) => {
   res.send('Server Running');

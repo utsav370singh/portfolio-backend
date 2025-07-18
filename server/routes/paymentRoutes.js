@@ -9,7 +9,6 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
-// Create order
 router.post("/create-order", async (req, res) => {
   const { amount } = req.body;
   try {
@@ -25,7 +24,6 @@ router.post("/create-order", async (req, res) => {
   }
 });
 
-// Verify Payment
 router.post("/verify-payment", async (req, res) => {
   const { razorpay_order_id, razorpay_payment_id, razorpay_signature, email } = req.body;
 
@@ -51,8 +49,6 @@ router.post("/verify-payment", async (req, res) => {
   }
 });
 
-
-// Serve Resume (valid 24 hrs)
 router.get("/download/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -72,7 +68,6 @@ router.get("/download/:id", async (req, res) => {
   }
 });
 
-// Check if a user has a valid download
 router.post("/check-access", async (req, res) => {
   const { email } = req.body;
 
@@ -86,7 +81,6 @@ router.post("/check-access", async (req, res) => {
     const timeDiff = (Date.now() - new Date(record.timestamp)) / (1000 * 60 * 60);
     if (timeDiff > 24) return res.json({ success: false });
 
-    // still valid
     const downloadLink = `${req.protocol}://${req.get('host')}/api/payment/download/${record.paymentId}`;
     return res.json({ success: true, downloadLink });
   } catch (err) {
