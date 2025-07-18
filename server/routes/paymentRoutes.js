@@ -52,7 +52,11 @@ router.post('/verify-payment', async (req, res) => {
       orderId: razorpay_order_id,
     });
 
-    return res.status(200).json({ success: true });
+    return res.status(200).json({
+  success: true,
+  downloadLink: `https://portfolio-backend-wukj.onrender.com/api/download/${razorpay_payment_id}`,
+});
+
   } catch (err) {
     console.error("Error saving payment data:", err);
     return res.status(500).json({ success: false, message: "Error saving payment data" });
@@ -71,7 +75,8 @@ router.post('/check-access', async (req, res) => {
     const access = await ResumeDownload.findOne({ email });
 
     if (access) {
-      return res.status(200).json({ success: true, message: "Access granted" });
+      const downloadLink = `https://portfolio-backend-wukj.onrender.com/api/download/${access.paymentId}`;
+      return res.status(200).json({ success: true, message: "Access granted", downloadLink });
     } else {
       return res.status(403).json({ success: false, message: "Access denied" });
     }
@@ -80,6 +85,7 @@ router.post('/check-access', async (req, res) => {
     return res.status(500).json({ success: false, message: "Server error" });
   }
 });
+
 
 // ✅ Resume download route
 router.get('/download/:id', async (req, res) => {
