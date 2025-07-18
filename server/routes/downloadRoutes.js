@@ -1,12 +1,12 @@
 const express = require("express");
 const path = require("path");
-const ResumeDownload = require("../models/ResumeDownload.js");
+const { ResumeDownload } = require("../models/ResumeDownload.js");
 const router = express.Router();
 
 router.get("/:token", async (req, res) => {
   try {
     const token = req.params.token;
-    const record = await ResumeDownload.findOne({ paymentId: token }); 
+    const record = await ResumeDownload.findOne({ paymentId: token });
 
     if (!record) {
       return res.status(404).send("Invalid or expired download link.");

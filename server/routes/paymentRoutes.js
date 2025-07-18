@@ -1,93 +1,94 @@
-const express = require("express");
-const Razorpay = require("razorpay");
-const crypto = require("crypto");
+const express = require('express');
 const router = express.Router();
-const { ResumeDownload } = require("../models/ResumeDownload.js");
+const Razorpay = require('razorpay');
+const crypto = require('crypto');
+const Payment = require('../models/Payment');
+const path = require('path');
 
+// Razorpay instance
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
-router.post("/create-order", async (req, res) => {
-  const { amount } = req.body;
+// ✅ Create order
+router.post('/create-order', async (req, res) => {
+  const options = {
+    amount: 10000, // ₹100.00
+    currency: "INR",
+    receipt: `receipt_order_${Date.now()}`,
+  };
+
   try {
-    const order = await razorpay.orders.create({
-      amount: amount * 100,
-      currency: "INR",
-      receipt: `receipt_${Date.now()}`,
-    });
-    res.status(200).json(order);
+    const order = await razorpay.orders.create(options);
+    res.json(order);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Order creation failed" });
+    res.status(500).json({ error: 'Failed to create Razorpay order' });
   }
 });
 
-router.post("/verify-payment", async (req, res) => {
+// ✅ Verify payment and save
+router.post('/verify-payment', async (req, res) => {
   const { razorpay_order_id, razorpay_payment_id, razorpay_signature, email } = req.body;
 
-  const expectedSignature = crypto
-    .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-    .update(`${razorpay_order_id}|${razorpay_payment_id}`)
-    .digest("hex");
+  const generated_signature = crypto
+    .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+    .update(razorpay_order_id + "|" + razorpay_payment_id)
+    .digest('hex');
 
-  if (expectedSignature !== razorpay_signature) {
-    return res.status(400).json({ success: false, message: "Invalid signature" });
-  }
-
-  try {
-    const timestamp = new Date();
-    await ResumeDownload.create({ email, paymentId: razorpay_payment_id, timestamp });
-
-    const downloadLink = `${req.protocol}://${req.get('host')}/api/payment/download/${razorpay_payment_id}`;
-
-    res.json({ success: true, downloadLink });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, message: "Database error" });
-  }
-});
-
-router.get("/download/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const record = await ResumeDownload.findOne({ paymentId: id });
-
-    if (!record) return res.status(404).send("Download not found");
-
-    const timeDiff = (Date.now() - new Date(record.timestamp)) / (1000 * 60 * 60);
-    if (timeDiff > 24) return res.status(403).send("Link expired");
-
-    const path = require("path");
-    const filePath = path.join(__dirname, "..", "resume.pdf");
-    res.download(filePath, "Utsav_Resume.pdf");
-  } catch (err) {
-    console.error("Resume download error:", err);
-    res.status(500).send("Server error");
+  if (generated_signature === razorpay_signature) {
+    try {
+      await Payment.create({
+        email,
+        paymentId: razorpay_payment_id,
+        orderId: razorpay_order_id,
+      });
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ success: false, error: 'Error saving payment data' });
+    }
+  } else {
+    res.status(400).json({ success: false, error: 'Invalid payment signature' });
   }
 });
 
-router.post("/check-access", async (req, res) => {
+// ✅ Check access by email
+router.post('/check-access', async (req, res) => {
   const { email } = req.body;
 
   if (!email) return res.status(400).json({ success: false, message: "Email required" });
 
   try {
-    const record = await ResumeDownload.findOne({ email }).sort({ timestamp: -1 });
+    const payment = await Payment.findOne({ email });
 
-    if (!record) return res.json({ success: false });
-
-    const timeDiff = (Date.now() - new Date(record.timestamp)) / (1000 * 60 * 60);
-    if (timeDiff > 24) return res.json({ success: false });
-
-    const downloadLink = `${req.protocol}://${req.get('host')}/api/payment/download/${record.paymentId}`;
-    return res.json({ success: true, downloadLink });
-  } catch (err) {
-    console.error("Access check error:", err);
-    res.status(500).json({ success: false, message: "Server error" });
+    if (payment) {
+      res.json({ success: true, message: "Access granted" });
+    } else {
+      res.status(403).json({ success: false, message: "Access denied" });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 });
 
+// ✅ Download resume
+router.get('/download/:id', async (req, res) => {
+  const paymentId = req.params.id;
+
+  try {
+    const payment = await Payment.findOne({ paymentId });
+
+    if (!payment) {
+      return res.status(403).json({ success: false, message: "Unauthorized access" });
+    }
+
+    const filePath = path.join(__dirname, "..", "resume.pdf");
+    res.download(filePath, "resume.pdf");
+  } catch (err) {
+    console.error("Error in download:", err);
+    res.status(500).json({ success: false, error: 'Failed to download file' });
+  }
+});
 
 module.exports = router;
