@@ -1,8 +1,16 @@
+// server/models/ResumeDownload.js
 const mongoose = require("mongoose");
 
 const resumeDownloadSchema = new mongoose.Schema({
-  email: String,
-  paymentId: String,
+  paymentId: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+  email: {
+    type: String,
+    required: true,
+  },
   timestamp: {
     type: Date,
     default: Date.now,

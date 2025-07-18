@@ -23,10 +23,10 @@ mongoose.connect(process.env.MONGO_URI, {
 
 // Routes
 const paymentRoutes = require("./routes/paymentRoutes");
-const downloadRoutes = require("./routes/downloadRoute");
+const downloadRoutes = require("./routes/downloadRoutes");
 
 app.use("/api/payment", paymentRoutes);
-app.use("/api/download", downloadRoutes); // <-- your download route
+app.use("/api/download", downloadRoutes); 
 
 // Serve static resume if needed
 app.use("/static", express.static(path.join(__dirname, "public")));

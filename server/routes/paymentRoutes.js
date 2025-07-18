@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
-const Payment = require('../models/Payment');
+const { ResumeDownload } = require("../models/ResumeDownload");
+
 const path = require('path');
 
 // Razorpay instance
