@@ -42,7 +42,7 @@ router.post("/verify-payment", async (req, res) => {
     const timestamp = new Date();
     await ResumeDownload.create({ email, paymentId: razorpay_payment_id, timestamp });
 
-    const downloadLink = `http://localhost:5000/api/payment/download/${razorpay_payment_id}`;
+    const downloadLink = `${req.protocol}://${req.get('host')}/api/payment/download/${razorpay_payment_id}`;
 
     res.json({ success: true, downloadLink });
   } catch (err) {
@@ -50,6 +50,7 @@ router.post("/verify-payment", async (req, res) => {
     res.status(500).json({ success: false, message: "Database error" });
   }
 });
+
 
 // Serve Resume (valid 24 hrs)
 router.get("/download/:id", async (req, res) => {
