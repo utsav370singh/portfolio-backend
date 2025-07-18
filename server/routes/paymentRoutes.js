@@ -3,7 +3,6 @@ const router = express.Router();
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
 const { ResumeDownload } = require("../models/ResumeDownload");
-
 const path = require('path');
 
 // Razorpay instance
@@ -40,7 +39,7 @@ router.post('/verify-payment', async (req, res) => {
 
   if (generated_signature === razorpay_signature) {
     try {
-      await Payment.create({
+      await ResumeDownload.create({
         email,
         paymentId: razorpay_payment_id,
         orderId: razorpay_order_id,
@@ -61,7 +60,7 @@ router.post('/check-access', async (req, res) => {
   if (!email) return res.status(400).json({ success: false, message: "Email required" });
 
   try {
-    const payment = await Payment.findOne({ email });
+    const payment = await ResumeDownload.findOne({ email });
 
     if (payment) {
       res.json({ success: true, message: "Access granted" });
@@ -78,7 +77,7 @@ router.get('/download/:id', async (req, res) => {
   const paymentId = req.params.id;
 
   try {
-    const payment = await Payment.findOne({ paymentId });
+    const payment = await ResumeDownload.findOne({ paymentId });
 
     if (!payment) {
       return res.status(403).json({ success: false, message: "Unauthorized access" });

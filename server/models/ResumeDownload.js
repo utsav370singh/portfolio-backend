@@ -1,21 +1,11 @@
-// server/models/ResumeDownload.js
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const resumeDownloadSchema = new mongoose.Schema({
-  paymentId: {
-    type: String,
-    required: true,
-    unique: true,
-  },
-  email: {
-    type: String,
-    required: true,
-  },
-  timestamp: {
-    type: Date,
-    default: Date.now,
-  },
-});
+  email: { type: String, required: true },
+  paymentId: { type: String, required: true },
+  orderId: { type: String, required: true },
+}, { timestamps: true });
 
-const ResumeDownload = mongoose.model("ResumeDownload", resumeDownloadSchema);
-module.exports = { ResumeDownload };
+module.exports = {
+  ResumeDownload: mongoose.model('ResumeDownload', resumeDownloadSchema),
+};
